@@ -2,7 +2,7 @@
 
 ```{r}
 # loading packages
-pacman::p_load(tidyverse, patchwork)
+pacman::p_load(tidyverse, patchwork, ggpubr)
 ```
 
 # Defining general parameters
@@ -202,9 +202,25 @@ sum(Self == Other)
 
 df <- tibble(Self, Other, trial = seq(trials), Feedback = as.numeric(Self == Other))
 
-ggplot(df) + theme_classic() +
+df <- df %>% 
+  mutate(cumulativerate = cumsum(Feedback)/seq_along(Feedback))
+
+a <- ggplot(df) + theme_classic() +
   geom_line(color = "red", aes(trial, Self)) +
-  geom_line(color = "blue", aes(trial, Other))
+  geom_line(color = "blue", aes(trial, Other)) +
+  ggtitle("WSLS (self) vs. Strategy 1 (other)")
+
+b <- df %>% 
+  ggplot(aes(x = trial, y = cumulativerate)) +
+  geom_line()+
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  ylim(0,1) +
+  theme_classic() +
+  ggtitle("WSLS (self = 1) vs. Strategy 1 (other = 0)")
+
+ggarrange(a,b, nrow = 2, ncol = 1)
+
+ggsave("figures/outcome_1_agent_wsls_vs_strategy_1.png")
 
 ```
 
@@ -228,6 +244,27 @@ for (i in 2:trials) {
 
 sum(Self == Other)
 
+df <- tibble(Self, Other, trial = seq(trials), Feedback = as.numeric(Self == Other))
+
+df <- df %>% 
+  mutate(cumulativerate = cumsum(Feedback)/seq_along(Feedback))
+
+a <- ggplot(df) + theme_classic() +
+  geom_line(color = "red", aes(trial, Self)) +
+  geom_line(color = "blue", aes(trial, Other)) +
+  ggtitle("WSLS (self) vs. Strategy 2 (other)")
+
+b <- df %>% 
+  ggplot(aes(x = trial, y = cumulativerate)) +
+  geom_line()+
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  ylim(0,1) +
+  theme_classic() +
+  ggtitle("WSLS (self = 1) vs. Strategy 2 (other = 0)")
+
+ggarrange(a,b, nrow = 2, ncol = 1)
+
+ggsave("figures/outcome_1_agent_wsls_vs_strategy_2.png")
 ```
 
 ## Strategy 1 vs. Strategy 2
@@ -258,9 +295,25 @@ sum(Self == Other)
 
 df <- tibble(Self, Other, trial = seq(trials), Feedback = as.numeric(Self == Other))
 
-ggplot(df) + theme_classic() +
+df <- df %>% 
+  mutate(cumulativerate = cumsum(Feedback)/seq_along(Feedback))
+
+a <- ggplot(df) + theme_classic() +
   geom_line(color = "red", aes(trial, Self)) +
-  geom_line(color = "blue", aes(trial, Other))
+  geom_line(color = "blue", aes(trial, Other))  +
+  ggtitle("Strategy 1 (self) vs. Strategy 2 (other)")
+
+b <- df %>% 
+  ggplot(aes(x = trial, y = cumulativerate)) +
+  geom_line()+
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  ylim(0,1) +
+  theme_classic()  +
+  ggtitle("Strategy 1 (self = 1) vs. Strategy 2 (other = 0)")
+
+ggarrange(a,b, nrow = 2, ncol = 1)
+
+ggsave("figures/outcome_1_agent.png")
 ```
 
 # Simulating 100 pairs of agents for Strategy 1 vs. Strategy 2
@@ -303,7 +356,10 @@ df_1_vs_2 %>%
   geom_line()+
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   ylim(0,1) +
-  theme_classic()
+  theme_classic()  +
+  ggtitle("Strategy 1 (self = 1) vs. Strategy 2 (other = 0)")
+
+ggsave("figures/outcome_100_agents.png")
 
 df_1_vs_2 %>% 
   group_by(trial) %>% 
@@ -313,6 +369,9 @@ df_1_vs_2 %>%
   geom_ribbon(aes(y = mean_cumrate, ymin = mean_cumrate - sd_cumrate, ymax = mean_cumrate + sd_cumrate), alpha = 0.2)+
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   ylim(0,1) +
-  theme_classic()
+  theme_classic()  +
+  ggtitle("Strategy 1 (self = 1) vs. Strategy 2 (other = 0)")
+
+ggsave("figures/mean_outcome_100_agents.png")
 ```
 
