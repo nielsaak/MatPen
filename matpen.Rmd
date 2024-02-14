@@ -34,46 +34,23 @@ RandomAgent_f <- function(input, rate){
 # WSLSAgent (no noise)
 
 # as a function
-WSLSAgent_f <- function(prevChoice, Feedback){
+WSLSAgent_f <- function(prevChoice, Feedback, noise){
   if (Feedback == 1) {
     choice = prevChoice
   } else if (Feedback == 0) {
       choice = 1 - prevChoice
-      }
-  return(choice)
-}
-```
-
-## Strategy 1: The Strategy of Sai (a heuristic agent) with noise
-
-```{r}
-# alternative strategy 1: reverse gambler's fallacy (Sai's strategy). If previous two choices are the same and both win, then switch. If previous two choices are the same and both lose, then stay. Otherwise chose random.
-
-strategy_1 <- function(prevChoice_1, prevChoice_2, feedback_1, feedback_2, rate, noise){
-  if (prevChoice_1 == prevChoice_2){
-    if ((feedback_1 == 1) & (feedback_2 == 1)) {
-    choice = 1 - prevChoice_1
-    } else if ((feedback_1 == 0) & (feedback_2 == 0)) {
-    choice = prevChoice_1
-    } else {
-      choice <- rbinom(1, 1, rate)
-    }
-  } else {
-      choice <- rbinom(1, 1, rate)
   }
   if (rbinom(1, 1, noise) == 1) {choice = rbinom(1,1,0.5)}
   return(choice)
 }
-
-
 ```
 
-## Strategy 2: Win-switch-lose-stay Agent (with noise)
+## Strategy 1: Win-switch-lose-stay Agent (with noise)
 
 ```{r}
 # alternative strategy 2: Win switch lose stay
 
-strategy_2 <- function(prevChoice, Feedback, noise){
+strategy_1 <- function(prevChoice, Feedback, noise){
   if (Feedback == 1) {
     choice = 1 - prevChoice
   } else if (Feedback == 0) {
@@ -82,6 +59,30 @@ strategy_2 <- function(prevChoice, Feedback, noise){
   if (rbinom(1, 1, noise) == 1) {choice = rbinom(1,1,0.5)}
   return(choice)
 }
+
+```
+
+## Strategy 2: The Strategy of Sai (a heuristic agent) with noise
+
+```{r}
+# alternative strategy 1: reverse gambler's fallacy (Sai's strategy). If previous two choices are the same and both win, then switch. If previous two choices are the same and both lose, then stay. Otherwise chose random.
+
+strategy_2 <- function(prevChoice_1, prevChoice_2, feedback_1, feedback_2, noise){
+  if (prevChoice_1 == prevChoice_2){
+    if ((feedback_1 == 1) & (feedback_2 == 1)) {
+    choice = 1 - prevChoice_1
+    } else if ((feedback_1 == 0) & (feedback_2 == 0)) {
+    choice = prevChoice_1
+    } else {
+      choice <- rbinom(1, 1, 0.5)
+    }
+  } else {
+      choice <- rbinom(1, 1, 0.5)
+  }
+  if (rbinom(1, 1, noise) == 1) {choice = rbinom(1,1,0.5)}
+  return(choice)
+}
+
 
 ```
 
@@ -133,7 +134,7 @@ for (i in 3:trials) {
   if (Self[i - 2] == Other[i - 2]) {
     feedback_2 = 1
   } else {feedback_2 = 0}
-  Self[i] <- strategy_1(Self[i - 1], Self[i - 2], feedback_1 = feedback_1, feedback_2 = feedback_2, rate = 0.5, noise = 0.1)
+  Self[i] <- strategy_2(Self[i - 1], Self[i - 2], feedback_1 = feedback_1, feedback_2 = feedback_2, noise = 0.1)
 }
 
 sum(Self == Other)
@@ -161,7 +162,7 @@ for (i in 2:trials) {
   if (Self[i - 1] == Other[i - 1]) {
     Feedback = 1
   } else {Feedback = 0}
-  Self[i] <- strategy_2(Self[i - 1], Feedback, noise = 0.1)
+  Self[i] <- strategy_1(Self[i - 1], Feedback, noise = 0.1)
 }
 
 sum(Self == Other)
@@ -195,7 +196,7 @@ for (i in 3:trials) {
   } else {feedback_2 = 0}
   
   Self[i] <- WSLSAgent_f(prevChoice = Self[i-1], Feedback = feedback_1)
-  Other[i] <- strategy_1(Other[i - 1], Other[i - 2], feedback_1 = 1-feedback_1, feedback_2 = 1-feedback_2, rate = 0.5, noise = 0.1)
+  Other[i] <- strategy_2(Other[i - 1], Other[i - 2], feedback_1 = 1-feedback_1, feedback_2 = 1-feedback_2, noise = 0.1)
 }
 
 sum(Self == Other)
@@ -220,7 +221,7 @@ b <- df %>%
 
 ggarrange(a,b, nrow = 2, ncol = 1)
 
-ggsave("figures/outcome_1_agent_wsls_vs_strategy_1.png")
+ggsave("figures/outcome_1_agent_wsls_vs_strategy_2.png")
 
 ```
 
@@ -239,7 +240,7 @@ for (i in 2:trials) {
     Feedback = 1
   } else {Feedback = 0}
   Self[i] <- WSLSAgent_f(Self[i - 1], Feedback)
-  Other[i] <- strategy_2(prevChoice = Other[i - 1], Feedback = 1 - Feedback, noise = 0.1)
+  Other[i] <- strategy_1(prevChoice = Other[i - 1], Feedback = 1 - Feedback, noise = 0.1)
 }
 
 sum(Self == Other)
@@ -264,7 +265,7 @@ b <- df %>%
 
 ggarrange(a,b, nrow = 2, ncol = 1)
 
-ggsave("figures/outcome_1_agent_wsls_vs_strategy_2.png")
+ggsave("figures/outcome_1_agent_wsls_vs_strategy_1.png")
 ```
 
 ## Strategy 1 vs. Strategy 2
@@ -278,7 +279,7 @@ Self[1] <- RandomAgent_f(1, 0.5)
 Other[1] <- RandomAgent_f(1, 0.5)
 
 Self[2] <- RandomAgent_f(1, 0.5)
-Other[2] <- strategy_2(prevChoice = Other[1], Feedback = 1 - ifelse(Self[1] == Other[1], 1, 0), noise = 0.1)
+Other[2] <- strategy_1(prevChoice = Other[1], Feedback = 1 - ifelse(Self[1] == Other[1], 1, 0), noise = 0.1)
 
 for (i in 3:trials) {
   if (Self[i - 1] == Other[i - 1]) {
@@ -287,8 +288,8 @@ for (i in 3:trials) {
   if (Self[i - 2] == Other[i - 2]) {
     feedback_2 = 1
   } else {feedback_2 = 0}
-  Self[i] <- strategy_1(Self[i - 1], Self[i - 2], feedback_1 = feedback_1, feedback_2 = feedback_2, rate = 0.5, noise = 0.1)
-  Other[i] <- strategy_2(prevChoice = Other[i-1], Feedback = 1 - feedback_1, noise = 0.1)
+  Self[i] <- strategy_2(Self[i - 1], Self[i - 2], feedback_1 = feedback_1, feedback_2 = feedback_2, noise = 0.1)
+  Other[i] <- strategy_1(prevChoice = Other[i-1], Feedback = 1 - feedback_1, noise = 0.1)
 }
 
 sum(Self == Other)
@@ -316,6 +317,103 @@ ggarrange(a,b, nrow = 2, ncol = 1)
 ggsave("figures/outcome_1_agent.png")
 ```
 
+# Simulating 100 pairs of agents for Win-stay-lose-shift vs. Strategy 1
+
+```{r}
+df_WSLS_vs_1 <- NULL
+
+for (j in 1:agents){
+  Self <- rep(NA, trials)
+  Other <- rep(NA, trials)
+  
+  Self[1] <- RandomAgent_f(1, 0.5)
+  Other[1] <- RandomAgent_f(1, 0.5)
+  
+  Self[2] <- WSLSAgent_f(prevChoice = Self[1], Feedback = ifelse(Self[1] == Other[1], 1, 0), noise = 0.1)
+  Other[2] <- strategy_1(prevChoice = Other[1], Feedback = 1 - ifelse(Self[1] == Other[1], 1, 0), noise = 0.1)
+  
+  for (i in 3:trials) {
+    if (Self[i - 1] == Other[i - 1]) {
+      feedback_1 = 1
+    } else {feedback_1 = 0}
+    Self[i] <- WSLSAgent_f(prevChoice = Self[i - 1], Feedback = feedback_1, noise = 0.1)
+    Other[i] <- strategy_1(prevChoice = Other[i-1], Feedback = 1 - feedback_1, noise = 0.1)
+  }
+  
+  temp <- tibble(trial = seq(trials), feedback = ifelse(Self == Other, 1, 0), agent = j)
+  
+  df_WSLS_vs_1 <- rbind(df_WSLS_vs_1, temp)
+}
+
+df_WSLS_vs_1 <- df_WSLS_vs_1 %>% 
+  group_by(agent) %>% 
+  mutate(cumulativerate = cumsum(feedback)/seq_along(feedback))
+
+plot_WSLS_vs_1 <- df_WSLS_vs_1 %>% 
+  group_by(trial) %>% 
+  mutate(mean_cumrate = mean(cumulativerate), sd_cumrate = sd(cumulativerate)) %>%
+  ggplot(aes(x = trial)) +
+  geom_line(aes(y = mean_cumrate))+
+  geom_ribbon(aes(y = mean_cumrate, ymin = mean_cumrate - sd_cumrate, ymax = mean_cumrate + sd_cumrate), alpha = 0.2)+
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  ylim(0,1) +
+  theme_classic()  +
+  ggtitle("Agent WSLS vs. Agent 1") +
+  labs(x = "Trial", y = "")
+
+ggsave("figures/mean_outcome_100_agents_wsls_v_1.png")
+```
+
+# Simulating 100 pairs of agents for Win-stay-lose-shift vs. Strategy 2
+
+```{r}
+df_WSLS_vs_2 <- NULL
+
+for (j in 1:agents){
+  Self <- rep(NA, trials)
+  Other <- rep(NA, trials)
+  
+  Self[1] <- RandomAgent_f(1, 0.5)
+  Other[1] <- RandomAgent_f(1, 0.5)
+  
+  Self[2] <- WSLSAgent_f(prevChoice = Self[1], Feedback = ifelse(Self[1] == Other[1], 1, 0), noise = 0.1)
+  Other[2] <- RandomAgent_f(1, 0.5)
+  
+  for (i in 3:trials) {
+    if (Self[i - 1] == Other[i - 1]) {
+      feedback_1 = 1
+    } else {feedback_1 = 0}
+    if (Self[i - 2] == Other[i - 2]) {
+      feedback_2 = 1
+    } else {feedback_2 = 0}
+    Self[i] <- WSLSAgent_f(prevChoice = Self[i - 1], Feedback = feedback_1, noise = 0.1)
+    Other[i] <- strategy_2(Other[i - 1], Other[i - 2], feedback_1 = 1 - feedback_1, feedback_2 = 1 - feedback_2, noise = 0.1)
+  }
+  
+  temp <- tibble(trial = seq(trials), feedback = ifelse(Self == Other, 1, 0), agent = j)
+  
+  df_WSLS_vs_2 <- rbind(df_WSLS_vs_2, temp)
+}
+
+df_WSLS_vs_2 <- df_WSLS_vs_2 %>% 
+  group_by(agent) %>% 
+  mutate(cumulativerate = cumsum(feedback)/seq_along(feedback))
+
+plot_WSLS_vs_2 <- df_WSLS_vs_2 %>% 
+  group_by(trial) %>% 
+  mutate(mean_cumrate = mean(cumulativerate), sd_cumrate = sd(cumulativerate)) %>%
+  ggplot(aes(x = trial)) +
+  geom_line(aes(y = mean_cumrate))+
+  geom_ribbon(aes(y = mean_cumrate, ymin = mean_cumrate - sd_cumrate, ymax = mean_cumrate + sd_cumrate), alpha = 0.2)+
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  ylim(0,1) +
+  theme_classic()  +
+  ggtitle("Agent WSLS vs. Agent 2") +
+  labs(x = "Trial", y = "Mean Cumulative Rate")
+
+ggsave("figures/mean_outcome_100_agents_wsls_v_2.png")
+```
+
 # Simulating 100 pairs of agents for Strategy 1 vs. Strategy 2
 
 ```{r}
@@ -328,8 +426,8 @@ for (j in 1:agents){
   Self[1] <- RandomAgent_f(1, 0.5)
   Other[1] <- RandomAgent_f(1, 0.5)
   
-  Self[2] <- RandomAgent_f(1, 0.5)
-  Other[2] <- strategy_2(prevChoice = Other[1], Feedback = 1 - ifelse(Self[1] == Other[1], 1, 0), noise = 0.1)
+  Self[2] <- strategy_1(prevChoice = Other[1], Feedback = ifelse(Self[1] == Other[1], 1, 0), noise = 0.1) 
+  Other[2] <- RandomAgent_f(1, 0.5)
   
   for (i in 3:trials) {
     if (Self[i - 1] == Other[i - 1]) {
@@ -338,8 +436,8 @@ for (j in 1:agents){
     if (Self[i - 2] == Other[i - 2]) {
       feedback_2 = 1
     } else {feedback_2 = 0}
-    Self[i] <- strategy_1(Self[i - 1], Self[i - 2], feedback_1 = feedback_1, feedback_2 = feedback_2, rate = 0.5, noise = 0.1)
-    Other[i] <- strategy_2(prevChoice = Other[i-1], Feedback = 1 - feedback_1, noise = 0.1)
+    Self[i] <- strategy_1(prevChoice = Self[i-1], Feedback = feedback_1, noise = 0.1) 
+    Other[i] <- strategy_2(Other[i - 1], Other[i - 2], feedback_1 = 1 - feedback_1, feedback_2 = 1 - feedback_2, noise = 0.1)
   }
   
   temp <- tibble(trial = seq(trials), feedback = ifelse(Self == Other, 1, 0), agent = j)
@@ -357,11 +455,11 @@ df_1_vs_2 %>%
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   ylim(0,1) +
   theme_classic()  +
-  ggtitle("Strategy 1 (self = 1) vs. Strategy 2 (other = 0)")
+  ggtitle("Agent 1 vs. Agent 2")
 
 ggsave("figures/outcome_100_agents.png")
 
-df_1_vs_2 %>% 
+plot_1_vs_2 <- df_1_vs_2 %>% 
   group_by(trial) %>% 
   mutate(mean_cumrate = mean(cumulativerate), sd_cumrate = sd(cumulativerate)) %>%
   ggplot(aes(x = trial)) +
@@ -370,8 +468,17 @@ df_1_vs_2 %>%
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   ylim(0,1) +
   theme_classic()  +
-  ggtitle("Strategy 1 (self = 1) vs. Strategy 2 (other = 0)")
+  ggtitle("Agent 1 vs. Agent 2") +
+  labs(x = "Trial", y = "")
 
 ggsave("figures/mean_outcome_100_agents.png")
+```
+
+# 3 in 1 plot
+
+```{r}
+ggarrange(plot_WSLS_vs_1, plot_WSLS_vs_2, plot_1_vs_2, nrow = 3, ncol = 1)
+
+ggsave("figures/mean_outcome_100_agents_all.png")
 ```
 
